@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'corsheaders',
+    'api',
 ]
 
 MIDDLEWARE = [
@@ -89,19 +90,30 @@ DATABASES = {
 }
 
 # Keycloak settings
-KEYCLOAK_SERVER_URL = os.environ.get('KEYCLOAK_SERVER_URL', 'http://keycloak:8080')
+print("Loading Keycloak settings from environment:")
+print(f"KEYCLOAK_URL from env: {os.environ.get('KEYCLOAK_URL')}")
+
+KEYCLOAK_URL = os.environ.get('KEYCLOAK_URL', 'http://keycloak:8080')
 KEYCLOAK_REALM = os.environ.get('KEYCLOAK_REALM', 'test')
 KEYCLOAK_CLIENT_ID = os.environ.get('KEYCLOAK_CLIENT_ID', 'backintegration')
-KEYCLOAK_CLIENT_SECRET = os.environ.get('KEYCLOAK_CLIENT_SECRET', 'your-client-secret')
+KEYCLOAK_CLIENT_SECRET = os.environ.get('KEYCLOAK_CLIENT_SECRET', 'nmdnDct5SE0Tv6AllEmE2HnuYkdA2a1w')
+KEYCLOAK_VERIFY_SSL = os.environ.get('KEYCLOAK_VERIFY_SSL', 'False').lower() == 'true'
+
+print("Configured Keycloak settings:")
+print(f"KEYCLOAK_URL: {KEYCLOAK_URL}")
+print(f"KEYCLOAK_REALM: {KEYCLOAK_REALM}")
+print(f"KEYCLOAK_CLIENT_ID: {KEYCLOAK_CLIENT_ID}")
+print(f"KEYCLOAK_VERIFY_SSL: {KEYCLOAK_VERIFY_SSL}")
 
 # REST Framework settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
+        'core.authentication.KeycloakAuthentication',
     ],
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'UNAUTHENTICATED_USER': None,
 }
 
 # CORS settings
@@ -148,3 +160,44 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '%(levelname)s %(asctime)s %(module)s %(process)d %(thread)d %(message)s'
+        },
+        'simple': {
+            'format': '%(levelname)s %(message)s'
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        '': {  # Root logger
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
+        'core': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'core.authentication': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'core.keycloak': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}

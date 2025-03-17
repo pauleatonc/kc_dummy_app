@@ -44,12 +44,8 @@ services:
       - ./backend:/app
     ports:
       - "8000:8000"
-    environment:
-      - DATABASE_URL=postgresql://kcdummy:kcdummy123@postgres:5432/kcdummy
-      - KEYCLOAK_SERVER_URL=http://keycloak:8080
-      - KEYCLOAK_REALM=kcdummy
-      - KEYCLOAK_CLIENT_ID=backend-client
-      - KEYCLOAK_CLIENT_SECRET=your-client-secret
+    env_file:
+      - ./backend/.env
     depends_on:
       - postgres
       - keycloak
@@ -61,10 +57,8 @@ services:
       - /app/node_modules
     ports:
       - "5173:5173"
-    environment:
-      - VITE_KEYCLOAK_URL=http://localhost:8080
-      - VITE_KEYCLOAK_REALM=kcdummy
-      - VITE_KEYCLOAK_CLIENT_ID=frontend-client
+    env_file:
+      - ./frontend/.env
     depends_on:
       - backend
 

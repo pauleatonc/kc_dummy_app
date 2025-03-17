@@ -10,54 +10,125 @@ function App() {
   const [isInitialized, setIsInitialized] = useState(false)
 
   useEffect(() => {
-    const keycloakConfig = {
-      url: import.meta.env.VITE_KEYCLOAK_URL,
-      realm: import.meta.env.VITE_KEYCLOAK_REALM,
-      clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID
+    const initializeKeycloak = async () => {
+      try {
+        const keycloakConfig = {
+          url: import.meta.env.VITE_KEYCLOAK_URL,
+          realm: import.meta.env.VITE_KEYCLOAK_REALM,
+          clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID
+        }
+
+        console.log('Keycloak config:', keycloakConfig) // Para debug
+
+        const keycloakClient = new Keycloak(keycloakConfig)
+
+        // Configuración mínima sin SSO ni iframe
+        await keycloakClient.init({
+          onLoad: null,
+          pkceMethod: 'S256',
+          checkLoginIframe: false,
+          redirectUri: window.location.origin + window.location.pathname
+        })
+
+        // Verificar si hay un token válido
+        const isAuthenticated = keycloakClient.authenticated || false
+
+        // Configurar interceptor de Axios para tokens
+        axios.interceptors.request.use(
+          (config) => {
+            if (keycloakClient.authenticated && keycloakClient.token) {
+              config.headers.Authorization = `Bearer ${keycloakClient.token}`
+            }
+            return config
+          },
+          (error) => Promise.reject(error)
+        )
+
+        setKeycloak(keycloakClient)
+        setAuthenticated(isAuthenticated)
+        setMessage(isAuthenticated ? 'Sesión iniciada correctamente' : '')
+        setIsInitialized(true)
+      } catch (error) {
+        console.error('Keycloak init error:', error)
+        setMessage('Error al inicializar la autenticación')
+        setIsInitialized(true)
+      }
     }
 
-    const keycloakClient = new Keycloak(keycloakConfig)
-
-    keycloakClient.init({
-      onLoad: 'check-sso',
-      silentCheckSsoRedirectUri: window.location.origin + '/silent-check-sso.html',
-      checkLoginIframe: false,
-      enableLogging: true,
-      pkceMethod: 'S256'
-    }).then(auth => {
-      setKeycloak(keycloakClient)
-      setAuthenticated(auth)
-      setIsInitialized(true)
-    }).catch(error => {
-      console.error('Keycloak init error:', error)
-      setIsInitialized(true)
-    })
+    initializeKeycloak()
   }, [])
 
   const handleLogin = () => {
     if (keycloak) {
-      keycloak.login()
+      try {
+        keycloak.login({
+          redirectUri: window.location.origin + window.location.pathname,
+          scope: 'openid profile email'
+        }).catch(error => {
+          console.error('Login error:', error)
+          setMessage('Error al iniciar sesión')
+        })
+      } catch (error) {
+        console.error('Login error:', error)
+        setMessage('Error al iniciar sesión')
+      }
     }
   }
 
   const handleLogout = () => {
     if (keycloak) {
-      keycloak.logout()
+      try {
+        keycloak.logout({
+          redirectUri: window.location.origin + window.location.pathname
+        }).catch(error => {
+          console.error('Logout error:', error)
+          setMessage('Error al cerrar sesión')
+        })
+      } catch (error) {
+        console.error('Logout error:', error)
+        setMessage('Error al cerrar sesión')
+      }
     }
   }
 
   const fetchProtectedData = async () => {
     if (keycloak && authenticated) {
       try {
+        console.log('Frontend Token:', keycloak.token);
+        
+        // Primero intercambiamos el token
+        const authResponse = await axios.post('http://localhost:8000/api/auth/token/', null, {
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${keycloak.token}`
+          },
+          withCredentials: true
+        });
+
+        const backendToken = authResponse.data.token;
+        console.log('Backend Token:', backendToken);
+
+        // Luego hacemos la petición protegida con el token del backend
         const response = await axios.get('http://localhost:8000/api/test/', {
           headers: {
-            Authorization: `Bearer ${keycloak.token}`
-          }
-        })
-        setMessage(response.data.message)
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${backendToken}`
+          },
+          withCredentials: true
+        });
+
+        console.log('Response:', response.data);
+        setMessage(response.data.message);
       } catch (error) {
-        console.error('API call error:', error)
-        setMessage('Error fetching data')
+        console.error('API call error:', error);
+        console.error('Error response:', error.response?.data);
+        if (error.response?.status === 401) {
+          keycloak.login();
+        } else {
+          setMessage('Error al obtener datos del servidor: ' + (error.response?.data?.error || error.message));
+        }
       }
     }
   }
@@ -89,7 +160,7 @@ function App() {
 
             {authenticated ? (
               <div className="mt-4">
-                <p className="text-success mb-4">Sesión iniciada correctamente</p>
+                <p className="text-success mb-4">{message || 'Sesión iniciada correctamente'}</p>
                 <div className="d-grid gap-3" style={{ maxWidth: '400px' }}>
                   <button 
                     className="btn btn-primary" 
@@ -97,11 +168,6 @@ function App() {
                   >
                     Probar API
                   </button>
-                  {message && (
-                    <div className="alert alert-info">
-                      {message}
-                    </div>
-                  )}
                   <button 
                     className="btn btn-outline-primary" 
                     onClick={handleLogout}
@@ -124,6 +190,9 @@ function App() {
                     <span className="fw-bold">Keycloak</span>
                   </div>
                 </button>
+                {message && (
+                  <p className="text-danger mt-3">{message}</p>
+                )}
               </div>
             )}
           </div>
