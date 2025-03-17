@@ -33,7 +33,7 @@ Esta aplicación demuestra la integración de Keycloak con una arquitectura fron
 
 1. **Clonar el repositorio**:
    ```bash
-   git clone <repositorio>
+   git clone git@github.com:pauleatonc/kc_dummy_app.git
    cd kc_dummy
    ```
 
