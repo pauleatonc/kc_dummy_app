@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Keycloak from 'keycloak-js'
 import axios from 'axios'
 import logoSag from './assets/LOGOSAG.png'
+import logoAndes from './assets/AndesLogo.svg'
 import ClaveUnicaButton from './components/ClaveUnicaButton'
 
 function App() {
@@ -222,8 +223,8 @@ function App() {
   }
 
   return (
-    <div className="min-vh-100">
-      <div className="container-fluid bg-white py-4">
+    <div className="min-vh-100 d-flex flex-column">
+      <div className="container-fluid bg-white py-4 flex-grow-1">
         <div className="row">
           <div className="col-12">
             <div className="d-flex align-items-center gap-3 mb-5 justify-content-center">
@@ -345,6 +346,17 @@ function App() {
           </div>
         </div>
       </div>
+      <footer className="bg-light py-3 mt-auto">
+        <div className="container text-center">
+          <div className="d-flex justify-content-center align-items-center gap-2">
+            <img 
+              src={logoAndes} 
+              alt="Andes Digital Logo" 
+              style={{ height: '30px', filter: 'brightness(0)' }} 
+            />
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }
