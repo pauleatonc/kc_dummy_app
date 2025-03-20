@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import Keycloak from 'keycloak-js'
 import axios from 'axios'
-import andesLogo from './assets/AndesLogo.svg'
+import logoSag from './assets/LOGOSAG.png'
+import ClaveUnicaButton from './components/ClaveUnicaButton'
 
 function App() {
   const [keycloak, setKeycloak] = useState(null)
@@ -144,15 +145,15 @@ function App() {
   }
 
   return (
-    <div className="min-vh-100 bg-light">
+    <div className="min-vh-100">
       <div className="container-fluid bg-white py-4">
         <div className="row">
           <div className="col-12">
-            <div className="d-flex align-items-center gap-3 mb-4">
+            <div className="d-flex align-items-center gap-3 mb-5 justify-content-center">
               <img 
-                src={andesLogo} 
+                src={logoSag} 
                 alt="Andes Digital Logo" 
-                style={{ height: '40px', filter: 'brightness(0)' }} 
+                style={{ height: '200px' }} 
               />            
             </div>
             
@@ -178,18 +179,7 @@ function App() {
               </div>
             ) : (
               <div className="mt-5">
-                <button 
-                  className="btn btn-primary d-inline-flex align-items-center gap-3 px-4 py-3"
-                  onClick={handleLogin}
-                >
-                  <div className="bg-white rounded-circle p-2 text-primary">
-                    👤
-                  </div>
-                  <div className="d-flex flex-column align-items-start">
-                    <small className="opacity-75">Iniciar sesión con</small>
-                    <span className="fw-bold">Keycloak</span>
-                  </div>
-                </button>
+                <ClaveUnicaButton onClick={handleLogin} />
                 {message && (
                   <p className="text-danger mt-3">{message}</p>
                 )}
