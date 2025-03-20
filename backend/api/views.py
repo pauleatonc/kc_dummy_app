@@ -13,6 +13,8 @@ from django.conf import settings
 import requests
 import jwt
 import json
+from .models import Pesticide
+from .serializers import PesticideSerializer
 
 logger = logging.getLogger(__name__)
 
@@ -114,12 +116,41 @@ def test_view(request):
         
         return Response({
             'message': 'API funcionando correctamente',
-            'user': {
-                'username': request.user.user_info.get('preferred_username'),
+            'user_info': {
+                'name': request.user.user_info.get('name', request.user.user_info.get('preferred_username')),
                 'email': request.user.user_info.get('email'),
+                'rut': request.user.user_info.get('rut', 'No disponible'),
                 'roles': request.user.token_info.get('realm_access', {}).get('roles', [])
             }
         })
     except Exception as e:
         logger.error(f"Error en test_view: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@authentication_classes([keycloak_auth_class('backintegration')])
+@permission_classes([IsAuthenticated])
+def pesticides_list(request):
+    """Vista para listar todos los productos fitosanitarios."""
+    try:
+        pesticides = Pesticide.objects.all()
+        serializer = PesticideSerializer(pesticides, many=True)
+        return Response(serializer.data)
+    except Exception as e:
+        logger.error(f"Error en pesticides_list: {str(e)}")
+        return Response({'error': str(e)}, status=500)
+
+@api_view(['GET'])
+@authentication_classes([keycloak_auth_class('backintegration')])
+@permission_classes([IsAuthenticated])
+def pesticide_detail(request, pk):
+    """Vista para obtener el detalle de un producto fitosanitario."""
+    try:
+        pesticide = Pesticide.objects.get(pk=pk)
+        serializer = PesticideSerializer(pesticide)
+        return Response(serializer.data)
+    except Pesticide.DoesNotExist:
+        return Response({'error': 'Producto no encontrado'}, status=404)
+    except Exception as e:
+        logger.error(f"Error en pesticide_detail: {str(e)}")
         return Response({'error': str(e)}, status=500)
