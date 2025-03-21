@@ -51,35 +51,30 @@ Esta aplicación demuestra la integración de Keycloak con una arquitectura fron
    - Backend: http://localhost:8000
    - Keycloak: http://localhost:8080
 
-## Configuración de Keycloak (v23.0.0+)
+## Configuración de Keycloak
 
-1. **Crear Realm**:
-   - Nombre: `test`
-   - Enabled: `ON`
+1. Crear un nuevo realm en Keycloak
+2. Crear dos clientes en el realm:
+   - Frontend (cliente público):
+     - Client ID:
+     - Access Type: public
+     - Valid Redirect URIs: http://localhost:5173/*
+     - Web Origins: http://localhost:5173
+   - Backend (cliente privado):
+     - Client ID:
+     - Access Type: confidential
+     - Service Accounts: ON
+     - Client Protocol: openid-connect
 
-2. **Cliente Frontend (`frontintegration`)**:
-   - Access Type: `public`
-   - Standard Flow Enabled: `ON`
-   - Valid Redirect URIs: `http://localhost:5173/*`
-   - Web Origins: `http://localhost:5173`
-   - Client Scopes:
-     - Default: `openid`, `profile`, `email`, `roles`
+### Configuración de Archivos de Entorno
 
-3. **Cliente Backend (`backintegration`)**:
-   - Access Type: `confidential`
-   - Service Account Enabled: `ON`
-   - Authorization Enabled: `ON`
-   - Client Authenticator: `Client Id and Secret`
-   - Service Account Roles:
-     - Realm Roles:
-       - `uma_authorization`
-       - `offline_access`
-     - Client Roles > Account:
-       - `manage-account`
-       - `manage-account-links`
-       - `view-profile`
-   - Client Scopes:
-     - Default: `openid`, `profile`, `email`, `roles`
+El proyecto requiere dos archivos de entorno diferentes:
+
+1. `.env` (front y back) - Para despliegue de desarrollo (docker-compose.yml). Utilizar el .ev.example
+
+2. `.env.local` (front y back)  - Para despliegue local (docker-compose.local.yml). Utilizar el .ev.example
+
+Asegúrate de tener ambos archivos configurados correctamente según el tipo de despliegue que estés utilizando.
 
 ## Flujo de Autenticación
 
