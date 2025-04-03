@@ -105,6 +105,26 @@ function App() {
         setActiveView('userInfo')
         console.log('Frontend Token:', keycloak.token);
         
+        // Obtener información del usuario directamente del token
+        const tokenData = keycloak.tokenParsed;
+        console.log('Token Data:', tokenData);
+        
+        // Crear un objeto con la información del usuario
+        const userData = {
+          name: tokenData.name || 'No disponible',
+          email: tokenData.email || 'No disponible',
+          rut: tokenData.rut_numero && tokenData.rut_dv 
+            ? `${tokenData.rut_numero}-${tokenData.rut_dv}` 
+            : 'No disponible',
+          email_verified: tokenData.email_verified || false,
+          preferred_username: tokenData.preferred_username || 'No disponible',
+          roles: keycloak.realmAccess?.roles || []
+        };
+        
+        console.log('User Data:', userData);
+        setUserInfo(userData);
+        setMessage('Información del usuario obtenida correctamente');
+        
         // Primero intercambiamos el token
         const authResponse = await axios.post('http://localhost:8000/api/auth/token/', null, {
           headers: {
@@ -129,8 +149,6 @@ function App() {
         });
 
         console.log('Response:', response.data);
-        setMessage(response.data.message);
-        setUserInfo(response.data.user_info);
       } catch (error) {
         console.error('API call error:', error);
         console.error('Error response:', error.response?.data);
@@ -275,24 +293,27 @@ function App() {
                     {activeView === 'userInfo' && userInfo && (
                       <div className="p-4 border rounded">
                         <div className="mb-4">
-                          <h3 className="h5 mb-3">Información del usuario entregada por keycloak</h3>
+                          <h3 className="h5 mb-3 text-center">Información del Usuario</h3>
                           <div className="d-flex flex-column gap-2">
-                            <div>
-                              <strong>Nombre:</strong> {userInfo.name}
+                            <div className="d-flex align-items-center gap-2 justify-content-center">
+                              <strong>Nombre:</strong>
+                              <span>{userInfo.name}</span>
                             </div>
-                            <div>
-                              <strong>Email:</strong> {userInfo.email}
+                            <div className="d-flex align-items-center gap-2 justify-content-center">
+                              <strong>RUT:</strong>
+                              <span>{userInfo.rut}</span>
                             </div>
-                            <div>
-                              <strong>RUT:</strong> {userInfo.rut}
+                            <div className="d-flex align-items-center gap-2 justify-content-center">
+                              <strong>Email:</strong>
+                              <span>{userInfo.email}</span>
                             </div>
-                            <div>
+                            <div className="d-flex align-items-center gap-2 justify-content-center">
+                              <strong>Nombre de Usuario Preferido:</strong>
+                              <span>{userInfo.preferred_username}</span>
+                            </div>
+                            <div className="d-flex align-items-center gap-2 justify-content-center">
                               <strong>Roles:</strong>
-                              <ul className="mb-0">
-                                {userInfo.roles.map((role, index) => (
-                                  <li key={index}>{role}</li>
-                                ))}
-                              </ul>
+                              <span>{userInfo.roles.join(', ')}</span>
                             </div>
                           </div>
                         </div>
